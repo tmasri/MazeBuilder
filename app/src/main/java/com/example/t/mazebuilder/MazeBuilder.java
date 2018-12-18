@@ -19,16 +19,114 @@ public class MazeBuilder {
 
         maze = new Path[s][s];
         buildWalls();
-        buildMazeWalls();
+        breakWalls();
 
         buildMaze();
 
     }
 
+    /*
+     * Each Path(element) is aware of its own walls
+     *
+     * @return 2D array of the path, the maze
+     */
     public Path[][] getMaze() {
         return maze;
     }
 
+    /*
+     * Build the initial state of the maze, every element
+     * has four walls around it and is not connected to
+     * any other element
+     */
+    private void buildWalls() {
+
+        walls = new ArrayList<>();
+        Vertex v1, v2;
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                // add right wall, dont add border
+                if (x+1 < size) {
+                    v1 = new Vertex(x, y);
+                    v2 = new Vertex(x+1, y);
+                    walls.add(new Wall(v1, v2));
+                }
+
+                // add bottom wall, dont add border
+                if (y+1 < size) {
+                    v1 = new Vertex(x, y);
+                    v2 = new Vertex(x, y+1);
+                    walls.add(new Wall(v1, v2));
+                }
+            }
+        }
+
+    }
+
+    /*
+     * Using the help of DisjointSet keep on looping
+     * until every element of the maze is connected
+     * to at least one other element
+     *
+     * Everytime a union happens, the wall between
+     * the randomly chosen x and y will break
+     */
+    private void breakWalls() {
+
+        DisjointSet ds = new DisjointSet(size*size);
+
+        int bound = size*size;
+        int x, y, u, v;
+        while (ds.count() != 1) {
+
+            x = r.nextInt(bound); // get random x
+            y = getYPossible(x, bound); // get a random y around the x
+
+            // find the set number of the values chosen
+            u = ds.find(x);
+            v = ds.find(y);
+
+            // if they are not of the same set, break wall
+            // and unionize sets
+            if (u != v) {
+                isWall(x, y, true);
+                ds.union(u, v);
+            }
+
+        }
+
+    }
+
+    /*
+     * Gets vertex for x and y to check if theres a wall between them
+     * if there is a wall, remove from set of walls and return true
+     */
+    private boolean isWall(int x, int y, boolean breaker) {
+
+        Vertex v1, v2;
+        v1 = getIJ(x);
+        v2 = getIJ(y);
+        Wall w;
+
+        for (int i = 0; i < walls.size(); i++) {
+            w = new Wall(v1, v2);
+            if (walls.get(i).equals(w)) {
+                if (breaker) walls.remove(i);
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    /*
+     * Turns list of walls to a maze, each element having
+     * four booleans for which walls exist, so each element
+     * is aware of its own walls
+     *
+     * top, bottom, left, right
+     */
     private void buildMaze() {
 
         boolean top, bottom, left, right;
@@ -81,51 +179,13 @@ public class MazeBuilder {
 
     }
 
-    private boolean isWall(int x, int y, boolean breaker) {
-
-        Vertex v1, v2;
-        v1 = getIJ(x);
-        v2 = getIJ(y);
-        Wall w;
-
-        for (int i = 0; i < walls.size(); i++) {
-            w = new Wall(v1, v2);
-            if (walls.get(i).equals(w)) {
-                if (breaker) walls.remove(i);
-                return true;
-            }
-        }
-
-        return false;
-
-    }
-
-    private void buildMazeWalls() {
-
-        DisjointSet ds = new DisjointSet(size*size);
-
-        int bound = size*size;
-        int x, y, u, v;
-        while (ds.count() != 1) {
-
-            x = r.nextInt(bound);
-            y = getYPossible(x, bound);
-
-            // find the set number of the values chosen
-            u = ds.find(x);
-            v = ds.find(y);
-
-            // if they are not of the same set, break wall
-            // and unionize sets
-            if (u != v) {
-                isWall(x, y, true);
-                ds.union(u, v);
-            }
-
-        }
-
-    }
-
+    /*
+     * Finds the possible spots around x to assign to y
+     * and chooses a random position from the list of
+     * possibilities
+     *
+     * @return value for y from list of possibilities
+     */
     private int getYPossible(int x, int bound) {
 
         ArrayList<Integer> yPossible = new ArrayList<>();
@@ -147,6 +207,13 @@ public class MazeBuilder {
 
     }
 
+    /*
+     * Turns the position given from the maze to a vertex
+     * with i and j coordinates
+     *
+     * @param x position in maze
+     * @return vertex containing x and y coordinates
+     */
     private Vertex getIJ(int x) {
 
         int i,j;
@@ -155,30 +222,6 @@ public class MazeBuilder {
         i = (x - j)/size;
 
         return new Vertex(j,i);
-
-    }
-
-    private void buildWalls() {
-
-        walls = new ArrayList<>();
-        Vertex v1, v2;
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                // add right wall, dont add border
-                if (x+1 < size) {
-                    v1 = new Vertex(x, y);
-                    v2 = new Vertex(x+1, y);
-                    walls.add(new Wall(v1, v2));
-                }
-
-                // add bottom wall, dont add border
-                if (y+1 < size) {
-                    v1 = new Vertex(x, y);
-                    v2 = new Vertex(x, y+1);
-                    walls.add(new Wall(v1, v2));
-                }
-            }
-        }
 
     }
 

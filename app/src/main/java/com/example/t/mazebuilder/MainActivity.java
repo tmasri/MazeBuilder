@@ -10,7 +10,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        MazeBuilder maze = new MazeBuilder(6);
+        Maze maze = new Maze(6);
 
     }
 }
