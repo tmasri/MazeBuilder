@@ -46,4 +46,13 @@ public class Path {
         return bottomWall;
     }
 
+    public static int[] getIJ(int x, int mazeSize) {
+        int i,j;
+
+        j = x % mazeSize;
+        i = (x - j)/mazeSize;
+
+        return new int[]{i,j};
+    }
+
 }
