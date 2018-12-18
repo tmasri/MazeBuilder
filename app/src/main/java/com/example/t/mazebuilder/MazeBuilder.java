@@ -8,33 +8,99 @@ public class MazeBuilder {
 
     private int size;
     private ArrayList<Wall> walls;
+    private Path[][] maze;
 
     private Random r;
 
-    /*
-     * MazeBuilder will handle all the necessary parts
-     * needed to build a maze, will call buildWalls and
-     * buildMaze to build the maze
-     *
-     * @param s the dimentions of the maze
-     */
     public MazeBuilder(int s) {
 
         r = new Random();
         size = s;
 
+        maze = new Path[s][s];
         buildWalls();
+        buildMazeWalls();
+
         buildMaze();
 
     }
 
-    /*
-     * Uses DisjointSet class to for help, everytime ds
-     * performes a union, buildMaze will break the wall
-     * between the numbers randomly chosen from random
-     * generator
-     */
+    public Path[][] getMaze() {
+        return maze;
+    }
+
     private void buildMaze() {
+
+        boolean top, bottom, left, right;
+        int pos;
+
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+
+                top = false;
+                bottom = false;
+                right = false;
+                left = false;
+
+                pos = (y*size)+x;
+                // check top
+                if (pos - size >= 0) {
+                    // check if vertex above has bottom wall
+                    top = isWall(pos - size, pos, false);
+                } else {
+                    // if out of bounds then it hit wall
+                    top = true;
+                }
+
+                // check bottom
+                if (pos + size < size*size) {
+                    bottom = isWall(pos, pos + size, false);
+                } else {
+                    bottom = true;
+                }
+
+                // check left
+                if (x - 1 >= 0) {
+                    left = isWall(pos - 1, pos, false);
+                } else {
+                    left = true;
+                }
+
+                // check right
+                if (x + 1 < size) {
+                    right = isWall(pos, pos + 1, false);
+                } else {
+                    right = true;
+                }
+
+                maze[y][x] = new Path((y*size)+x);
+                maze[y][x].setWalls(top, bottom, left, right);
+
+            }
+        }
+
+    }
+
+    private boolean isWall(int x, int y, boolean breaker) {
+
+        Vertex v1, v2;
+        v1 = getIJ(x);
+        v2 = getIJ(y);
+        Wall w;
+
+        for (int i = 0; i < walls.size(); i++) {
+            w = new Wall(v1, v2);
+            if (walls.get(i).equals(w)) {
+                if (breaker) walls.remove(i);
+                return true;
+            }
+        }
+
+        return false;
+
+    }
+
+    private void buildMazeWalls() {
 
         DisjointSet ds = new DisjointSet(size*size);
 
@@ -52,7 +118,7 @@ public class MazeBuilder {
             // if they are not of the same set, break wall
             // and unionize sets
             if (u != v) {
-                breakWall(x, y);
+                isWall(x, y, true);
                 ds.union(u, v);
             }
 
@@ -60,13 +126,6 @@ public class MazeBuilder {
 
     }
 
-    /*
-     * Gets a random y value around x
-     *
-     * @param x the random x value chosen
-     * @param bound the boundary value of the matrix
-     * @return randomly chosen value from possible directions around x
-     */
     private int getYPossible(int x, int bound) {
 
         ArrayList<Integer> yPossible = new ArrayList<>();
@@ -88,36 +147,6 @@ public class MazeBuilder {
 
     }
 
-    /*
-     * Removes wall from list of walls in the maze
-     *
-     * @param x value 1
-     * @param y value 2
-     */
-    private void breakWall(int x, int y) {
-
-        Vertex v1, v2;
-        v1 = getIJ(x);
-        v2 = getIJ(y);
-
-        Wall wall;
-        for (int i = 0; i < walls.size(); i++) {
-            wall = new Wall(v1, v2);
-            if (walls.get(i).equals(wall)) {
-                walls.remove(i);
-                break;
-            }
-        }
-
-    }
-
-    /*
-     * Finds the row and column value from the position
-     * in the matrix
-     *
-     * @param x value from matrix
-     * @return the vertex in the matrix
-     */
     private Vertex getIJ(int x) {
 
         int i,j;
@@ -129,10 +158,6 @@ public class MazeBuilder {
 
     }
 
-    /*
-     * Builds a right and bottom wall for every element in
-     * the matrix, except the bottom row
-     */
     private void buildWalls() {
 
         walls = new ArrayList<>();
